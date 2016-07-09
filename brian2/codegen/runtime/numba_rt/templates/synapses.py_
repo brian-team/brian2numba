@@ -1,0 +1,26 @@
+{% extends 'common.py_' %}
+
+{% block maincode %}
+    {# USES_VARIABLES { _queue } #}
+
+    #@jit
+    def _synapses(_spiking_synapses, {{subroutine_parameters}}):
+        for _spiking_synapse_idx in range(len(_spiking_synapses)):
+            # vector code
+            _idx = _spiking_synapses[_spiking_synapse_idx]
+            _vectorisation_idx = _idx
+            {{ vector_code | autoindent }}
+        return {{subroutine_parameters}}
+
+    _spiking_synapses = _queue.peek()
+
+    # scalar code
+    _vectorisation_idx = 1
+    {{ scalar_code | autoindent }}
+
+    {{subroutine_parameters}} = _synapses(_spiking_synapses, {{subroutine_arguments}})
+
+    # Advance the spike queue
+    _queue.advance()
+
+{% endblock %}

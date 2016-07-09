@@ -1,16 +1,16 @@
-{% extends 'common.pyx' %}
+{% extends 'common.py_' %}
 
-{% block maincode %}
-    {# USES_VARIABLES { t, rate, _clock_t, _clock_dt, _spikespace,
-                        _num_source_neurons, _source_start, _source_stop } #}
+{% block template_support_code %}
 
-    cdef int _num_spikes = {{_spikespace}}[_num{{_spikespace}}-1]
+@jit(nopython=True)
+def _ratemonitor(_spikespace, _num_spikespace, _source_start, _source_stop):
+    _num_spikes = {{_spikespace}}[_num{{_spikespace}}-1]
     
     # For subgroups, we do not want to record all spikes
     # We assume that spikes are ordered
-    cdef int _start_idx = 0
-    cdef int _end_idx = -1
-    cdef int _j
+    _start_idx = 0
+    _end_idx = -1
+    
     for _j in range(_num_spikes):
         _idx = {{_spikespace}}[_j]
         if _idx >= _source_start:
@@ -24,9 +24,19 @@
     if _end_idx == -1:
         _end_idx =_num_spikes
     _num_spikes = _end_idx - _start_idx
+
+    return _num_spikes, _spikespace, _num_spikespace
+
+{% endblock %}
+
+{% block maincode %}
+    {# USES_VARIABLES { t, rate, _clock_t, _clock_dt, _spikespace,
+                        _num_source_neurons, _source_start, _source_stop } #}
     
+    _num_spikes, _spikespace, _num_spikespace = _ratemonitor({{_spikespace}}, _num{{_spikespace}}, _source_start, _source_stop)
+
     # Calculate the new length for the arrays
-    cdef int _new_len = {{_dynamic_t}}.shape[0] + 1
+    _new_len = {{_dynamic_t}}.shape[0] + 1
 
     # Resize the arrays
     _owner.resize(_new_len)
