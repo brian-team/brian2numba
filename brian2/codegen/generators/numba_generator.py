@@ -172,8 +172,6 @@ class NumbaCodeGenerator(CodeGenerator):
                 subroutine_arguments.pop(i)
         subroutine_parameters += scalar_parameters
         subroutine_arguments += scalar_arguments
-        print "srparams"
-        print subroutine_parameters
         
         kwds['subroutine_parameters'] = ','.join(subroutine_parameters)
         kwds['subroutine_arguments'] = ','.join(subroutine_arguments)
