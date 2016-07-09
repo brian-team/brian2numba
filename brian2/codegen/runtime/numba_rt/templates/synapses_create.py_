@@ -11,8 +11,8 @@ USES_VARIABLES { _synaptic_pre, _synaptic_post, _all_pre, _all_post, rand, N,
 
 {% block template_support_code %}
 
-W = max(1000000/N, 1)
-_buffer_size = N*W
+W = max(1000000/N_pre, 1)
+_buffer_size = N_pre*W
 
 _prebuf = _numpy.zeros(_buffer_size, dtype=_numpy.int32)
 _postbuf = _numpy.zeros(_buffer_size, dtype=_numpy.int32)
@@ -29,7 +29,7 @@ def _flush_buffer(buf, dynarr, buf_len):
     data[_curlen:_curlen+buf_len] = buf[:buf_len]
 
 @jit
-def _synapses_create_post(_curbuf, {{subroutine_parameters}}):
+def _synapses_create_post(_curbuf, _i, _prebuf, _postbuf, _source_offset, _target_offset, _buffer_size ,{{subroutine_parameters}}):
     for _j in range(_num{{_all_post}}):
         _vectorisation_idx = _j
 
@@ -62,10 +62,10 @@ def _synapses_create_post(_curbuf, {{subroutine_parameters}}):
 
     return {{subroutine_parameters}}
 
-@jit
-def _synapses_create_pre(_i0, _curbuf, {{subroutine_parameters}}):
+#@jit
+def _synapses_create_pre(_i0, _curbuf, W, _prebuf, _postbuf, _source_offset, _target_offset, _buffer_size, {{subroutine_parameters}}):
     for _i in range(_i0, min(_i0+W-1, _num{{_all_pre}})):
-        {{subroutine_parameters}} = _synapses_create_post(_curbuf, {{subroutine_arguments}})
+        {{subroutine_parameters}} = _synapses_create_post(_curbuf, _i, _prebuf, _postbuf, _source_offset, _target_offset, _buffer_size, {{subroutine_arguments}})
 
     return {{subroutine_parameters}}
     
@@ -84,7 +84,7 @@ def _synapses_create_pre(_i0, _curbuf, {{subroutine_parameters}}):
     {{scalar_code|autoindent}}
 
     for _i0 in range(0, _num{{_all_pre}}, W):
-        {{subroutine_parameters}} = _synapses_create_pre(_i0, _curbuf, {{subroutine_arguments}})
+        {{subroutine_parameters}} = _synapses_create_pre(_i0, _curbuf, W, _prebuf, _postbuf, _source_offset, _target_offset, _buffer_size, {{subroutine_arguments}})
                     
     # Final buffer flush
     _flush_buffer(_prebuf, {{_dynamic__synaptic_pre}}, _curbuf)
