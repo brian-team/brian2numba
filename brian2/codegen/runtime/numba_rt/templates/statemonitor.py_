@@ -23,6 +23,7 @@ def _statemonitor_{{varname}}(_record_data_{{varname}}, _new_len, {{subroutine_p
 
 {% endblock %}
 
+
 {% block maincode %}
 
     _new_len = {{N}} + 1
@@ -36,8 +37,6 @@ def _statemonitor_{{varname}}(_record_data_{{varname}}, _new_len, {{subroutine_p
     {{ scalar_code|autoindent }}
 
     {% for varname, var in _recorded_variables.items() %}
-    # Resize the recorded variable "{{varname}}" and get the (potentially
-    # changed) reference to the underlying data
 
     _var_{{varname}}.resize((_new_len, _num{{_indices}}))
     _record_data_{{varname}} = {{get_array_name(var, access_data=False)}}.data
