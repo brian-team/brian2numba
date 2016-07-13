@@ -62,7 +62,7 @@ def _synapses_create_post(_curbuf, _i, _prebuf, _postbuf, _source_offset, _targe
 
     return {{subroutine_parameters}}
 
-#@jit
+@jit
 def _synapses_create_pre(_i0, _curbuf, W, _prebuf, _postbuf, _source_offset, _target_offset, _buffer_size, {{subroutine_parameters}}):
     for _i in range(_i0, min(_i0+W-1, _num{{_all_pre}})):
         {{subroutine_parameters}} = _synapses_create_post(_curbuf, _i, _prebuf, _postbuf, _source_offset, _target_offset, _buffer_size, {{subroutine_arguments}})
