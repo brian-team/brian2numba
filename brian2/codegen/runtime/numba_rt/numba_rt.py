@@ -3,6 +3,12 @@ Module providing `numbaCodeObject`.
 '''
 import numpy as np
 import math
+from tempfile import tempdir
+
+try:
+    import hashlib
+except ImportError:
+    import md5 as hashlib
 
 from brian2.core.preferences import prefs, BrianPreference
 from brian2.core.variables import (DynamicArrayVariable, ArrayVariable,
@@ -128,9 +134,10 @@ class NumbaCodeObject(CodeObject):
 
     def compile(self):
         super(NumbaCodeObject, self).compile()
-        with open('/home/zhenrui/Research/Goodman Lab/outfile.py', "w") as f:
+        outfile = tempdir + '/' + hashlib.md5(str(self.code).encode('utf-8')).hexdigest() + '.py'
+        with open(outfile, "w") as f:
             f.write(self.code)
-        execfile('/home/zhenrui/Research/Goodman Lab/outfile.py', self.namespace)
+        execfile(outfile, self.namespace)
         print self.code
 
     def run(self):
