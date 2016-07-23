@@ -1,0 +1,42 @@
+{# Note that we use this template only for subexpressions -- for normal arrays
+   we do not generate any code but simply access the data in the underlying
+   array directly. See RuntimeDevice.get_with_array #}
+
+{% extends 'common.py_' %}
+
+{# USES_VARIABLES { _group_idx } #}
+
+{% block template_support_code %}
+
+@jit
+def _group_variable_get(_elements_view, {{subroutine_parameters}}):
+
+    for _idx_group_idx in range(_num{{_group_idx}}):
+        _idx = {{_group_idx}}[_idx_group_idx]
+        _vectorisation_idx = _idx
+        
+        {{vector_code|autoindent}}
+        
+        _elements_view[_idx_group_idx] = _variable
+
+    return _elements_view, {{subroutine_parameters}}
+
+{% endblock %}
+
+{% block maincode %}
+
+    {%set np_type = numpy_dtype(variables['_variable'].dtype) %}
+
+    _vectorisation_idx = 1
+    
+    _num_elements = 0
+    _elements = _numpy.zeros(_num{{_group_idx}}, dtype=_numpy.{{np_type}})
+    _elements_view = _elements
+    
+    {{scalar_code|autoindent}}
+
+    _elements_view, {{subroutine_parameters}} = _group_variable_get(_elements_view, {{subroutine_arguments}})
+    
+    return _elements
+
+{% endblock %}
