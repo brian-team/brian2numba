@@ -10,11 +10,18 @@ USES_VARIABLES { _synaptic_pre, _synaptic_post, rand, N,
 ######################## TEMPLATE SUPPORT CODE ##############################
 
 {% block template_support_code %}
-_buffer_size = 1024
+if N_pre > 0:
+    W = max(1000000/N_pre, 1)
+    _buffer_size = N_pre * W
+else:
+    W = 1
+    _buffer_size = 1024
+
 _prebuf = _numpy.zeros(_buffer_size, dtype=_numpy.int32)
 _postbuf = _numpy.zeros(_buffer_size, dtype=_numpy.int32)
 _curbuf = 0
 
+@jit
 def _flush_buffer(buf, dynarr, buf_len):
     _curlen = dynarr.shape[0]
     _newlen = _curlen+buf_len
@@ -24,26 +31,9 @@ def _flush_buffer(buf, dynarr, buf_len):
     data = dynarr.data
     data[_curlen:_curlen+buf_len] = buf[:buf_len]
 
-{% endblock %}
-
-######################## MAIN CODE ##############################
-
-{% block maincode %}
-
-    global _curbuf
-
-    oldsize = len({{_dynamic__synaptic_pre}})
-
-    # _jump_algo, _log1p, _pconst, _jump variables are only used for probabilistic connections
-
-    # scalar code
-    _vectorisation_idx = 1
-    {{scalar_code['setup_iterator']|autoindent}}
-    {{scalar_code['create_j']|autoindent}}
-    {{scalar_code['create_cond']|autoindent}}
-    {{scalar_code['update_post']|autoindent}}
-
-    for _i in range(N_pre):
+@jit
+def _synapses_create_generator(_i0, W, N_pre, N_post, _buffer_size, _prebuf, _postbuf, _curbuf, _source_offset, _target_offset, {{subroutine_parameters}}):
+    for _i in range(_i0, min(N_pre, _i0+W-1)):
         _raw_pre_idx = _i + _source_offset
 
         {% if not postsynaptic_condition %}
@@ -103,6 +93,33 @@ def _flush_buffer(buf, dynarr, buf_len):
                     _flush_buffer(_prebuf, {{_dynamic__synaptic_pre}}, _curbuf)
                     _flush_buffer(_postbuf, {{_dynamic__synaptic_post}}, _curbuf)
                     _curbuf = 0
+    return _i0, W, N_pre, N_post, _buffer_size, _prebuf, _postbuf, _curbuf, _source_offset, _target_offset, {{subroutine_parameters}}
+
+{% endblock %}
+
+######################## MAIN CODE ##############################
+
+{% block maincode %}
+
+    global _prebuf
+    global _postbuf
+    global _curbuf
+    global _buffer_size
+    global W
+
+    oldsize = len({{_dynamic__synaptic_pre}})
+
+    # _jump_algo, _log1p, _pconst, _jump variables are only used for probabilistic connections
+
+    # scalar code
+    _vectorisation_idx = 1
+    {{scalar_code['setup_iterator']|autoindent}}
+    {{scalar_code['create_j']|autoindent}}
+    {{scalar_code['create_cond']|autoindent}}
+    {{scalar_code['update_post']|autoindent}}
+
+    for _i0 in range(0,N_pre,W):
+        _i0, W, N_pre, N_post, _buffer_size, _prebuf, _postbuf, _curbuf, _source_offset, _target_offset, {{subroutine_parameters}} = _synapses_create_generator(_i0, W, N_pre, N_post, _buffer_size, _prebuf, _postbuf, _curbuf, _source_offset, _target_offset, {{subroutine_arguments}})
 
     # Final buffer flush
     _flush_buffer(_prebuf, {{_dynamic__synaptic_pre}}, _curbuf)
