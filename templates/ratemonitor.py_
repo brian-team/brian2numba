@@ -4,7 +4,7 @@
 
 @jit(nopython=True)
 def _ratemonitor(_spikespace, _num_spikespace, _source_start, _source_stop):
-    _num_spikes = {{_spikespace}}[_num{{_spikespace}}-1]
+    _num_spikes = _spikespace[_num_spikespace-1]
     
     # For subgroups, we do not want to record all spikes
     # We assume that spikes are ordered
@@ -12,12 +12,12 @@ def _ratemonitor(_spikespace, _num_spikespace, _source_start, _source_stop):
     _end_idx = -1
     
     for _j in range(_num_spikes):
-        _idx = {{_spikespace}}[_j]
+        _idx = _spikespace[_j]
         if _idx >= _source_start:
             _start_idx = _j
             break
     for _j in range(_start_idx, _num_spikes):
-        _idx = {{_spikespace}}[_j]
+        _idx = _spikespace[_j]
         if _idx >= _source_stop:
             _end_idx = _j
             break

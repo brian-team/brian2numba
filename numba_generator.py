@@ -216,6 +216,7 @@ class NumbaCodeGenerator(CodeGenerator):
                                         numpy_dtype=get_numpy_dtype(
                                             ns_value.dtype),
                                         var_name=ns_key))
+                func_code = "@jit\n" + func_code
                 support_code.append(deindent(func_code))
             elif callable(func_code):
                 self.variables[varname] = func_code
@@ -272,6 +273,8 @@ class NumbaCodeGenerator(CodeGenerator):
                 dtype_name = get_numba_dtype(var.value)
                 line = '{varname} = _namespace["{varname}"]'.format(varname=varname)
                 load_namespace.append(line)
+            elif isinstance(var, Subexpression):
+                pass
             elif isinstance(var, Variable):
                 if var.dynamic:
                     load_namespace.append('{0} = _namespace["{1}"]'.format(self.get_array_name(var, False),
@@ -379,6 +382,8 @@ rand_code = '''
 _rand_buffer_size = 1024 
 _rand_buf = _numpy.zeros(_rand_buffer_size, dtype=_numpy.float64)
 _cur_rand_buf = 0
+
+@jit
 def _rand(_idx):
     global _cur_rand_buf
     global _rand_buf
@@ -407,6 +412,7 @@ DEFAULT_FUNCTIONS['randn'].implementations.add_implementation(NumbaCodeGenerator
                                                                   '_randn_buffer_index': device.randn_buffer_index})
 
 sign_code = '''
+@jit
 def _sign(x):
     return (0 < x) - (x < 0)
 '''
@@ -415,6 +421,7 @@ DEFAULT_FUNCTIONS['sign'].implementations.add_implementation(NumbaCodeGenerator,
                                                              name='_sign')
 
 clip_code = '''
+@jit
 def clip(x, low, high):
     if x<low:
         return low

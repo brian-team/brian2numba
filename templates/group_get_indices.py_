@@ -5,7 +5,7 @@
 {% block template_support_code %}
 
 @jit(nopython=True)
-def _group_get_indices(_elements_view, {{subroutine_parameters}}):
+def _group_get_indices(_elements_view, _num_elements, {{subroutine_parameters}}):
     for _idx in range(N):
         _vectorisation_idx = _idx
         
@@ -29,7 +29,7 @@ def _group_get_indices(_elements_view, {{subroutine_parameters}}):
     
     {{scalar_code|autoindent}}
 
-    _elements_view, _num_elements, {{subroutine_parameters}} = _group_get_indices(_elements_view, {{subroutine_arguments}})
+    _elements_view, _num_elements, {{subroutine_parameters}} = _group_get_indices(_elements_view,  _num_elements, {{subroutine_arguments}})
     
     return _elements[:_num_elements]
 

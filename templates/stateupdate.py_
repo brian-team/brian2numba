@@ -2,7 +2,7 @@
 
 {% block template_support_code %}
 
-@jit(nopython=True)
+@jit
 def _stateupdate({{subroutine_parameters}}):
     for _idx in range(N):
         _vectorisation_idx = _idx

@@ -8,7 +8,7 @@
 # Resize the recorded variable "{{varname}}" and get the (potentially
 # changed) reference to the underlying data
 
-@jit(nopython=True)
+@jit
 def _statemonitor_{{varname}}(_record_data_{{varname}}, _new_len, {{subroutine_parameters}}):
     for _i in range(_num{{_indices}}):
         # vector code
