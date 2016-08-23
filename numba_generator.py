@@ -162,8 +162,12 @@ class NumbaCodeGenerator(CodeGenerator):
             vector_code[name] = self.translate_one_statement_sequence(block, scalar=False)
 
         kwds = self.determine_keywords()
-        scalar_arguments = reduce(lambda x,y: x+y, scalar_code.values())
-        scalar_parameters = map(lambda x: x.split()[0], scalar_arguments)
+        scalar_code_lines = reduce(lambda x,y: x+y, scalar_code.values())
+        scalar_parameters = map(lambda x: x.split()[0], scalar_code_lines)
+        # Remove duplicate parameters and parameters that cannot be passed
+        scalar_parameters = list(set(scalar_parameters))
+        scalar_parameters = [param for param in scalar_parameters if "[" not in param]
+        scalar_arguments = ["{param} = {param}".format(param=param) for param in scalar_parameters]
         subroutine_parameters = kwds['subroutine_parameters'].split(',')
         subroutine_arguments =  kwds['subroutine_arguments'].split(',')
         for i, param in enumerate(subroutine_parameters):
@@ -216,7 +220,8 @@ class NumbaCodeGenerator(CodeGenerator):
                                         numpy_dtype=get_numpy_dtype(
                                             ns_value.dtype),
                                         var_name=ns_key))
-                func_code = "@jit\n" + func_code
+                if "@jit" not in func_code:
+                    func_code = "@jit\n" + func_code
                 support_code.append(deindent(func_code))
             elif callable(func_code):
                 self.variables[varname] = func_code
@@ -378,20 +383,26 @@ for func, func_cpp in [('arcsin', 'asin'), ('arccos', 'acos'), ('arctan', 'atan'
                                                                name=func_cpp)
 
 
-rand_code = '''
-_rand_buffer_size = 1024 
-_rand_buf = _numpy.zeros(_rand_buffer_size, dtype=_numpy.float64)
-_cur_rand_buf = 0
+# rand_code = '''
+# _rand_buffer_size = 1024 
+# _rand_buf = _numpy.zeros(_rand_buffer_size, dtype=_numpy.float64)
+# _cur_rand_buf = 0
 
+# @jit
+# def _rand(_idx):
+#     global _cur_rand_buf
+#     global _rand_buf
+#     if _cur_rand_buf==0:
+#         _rand_buf = _numpy.random.rand(_rand_buffer_size)
+#     val = _rand_buf[_cur_rand_buf]
+#     _cur_rand_buf = (_cur_rand_buf+1)%_rand_buffer_size
+#     return val
+# '''
+
+rand_code = '''
 @jit
 def _rand(_idx):
-    global _cur_rand_buf
-    global _rand_buf
-    if _cur_rand_buf==0:
-        _rand_buf = _numpy.random.rand(_rand_buffer_size)
-    val = _rand_buf[_cur_rand_buf]
-    _cur_rand_buf = (_cur_rand_buf+1)%_rand_buffer_size
-    return val
+    return _numpy.random.rand()
 '''
 
 randn_code = rand_code.replace('rand', 'randn').replace('randnom', 'random')

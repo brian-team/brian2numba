@@ -3,7 +3,6 @@ from numba import *
 import sys
 import time
 import numpy as np
-import math
 from math import sin, cos, tan, sinh, cosh, tanh, exp, log, log10, sqrt, asin, acos, atan, fmod, floor, ceil, pi
 
 # support code

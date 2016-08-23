@@ -21,6 +21,11 @@ _prebuf = _numpy.zeros(_buffer_size, dtype=_numpy.int32)
 _postbuf = _numpy.zeros(_buffer_size, dtype=_numpy.int32)
 _curbuf = 0
 
+# Vector code calls this, not sure why
+@jit
+def int_(x):
+    return int(x)
+
 @jit
 def _flush_buffer(buf, dynarr, buf_len):
     _curlen = dynarr.shape[0]

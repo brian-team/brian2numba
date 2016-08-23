@@ -20,7 +20,8 @@ from brian2.codegen.templates import Templater
 from brian2.codegen.targets import codegen_targets
 from brian2.utils.stringtools import get_identifiers
 
-from numba_generator import NumbaCodeGenerator
+from numba_generator import NumbaCodeGenerator, get_numpy_dtype
+
 
 __all__ = ['NumbaCodeObject']
 
@@ -43,7 +44,9 @@ class NumbaCodeObject(CodeObject):
     Execute code using Numba
     
     '''
-    templater = Templater('brian2numba', '.py_')
+    templater = Templater('brian2numba', '.py_',
+        env_globals={'numpy_dtype': get_numpy_dtype,
+                     'dtype': np.dtype})
     generator_class = NumbaCodeGenerator
     class_name = 'numba'
 
